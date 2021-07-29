@@ -73,7 +73,6 @@ func routeProxy(c *gin.Context) {
 func Listen(addr string) {
 	gin.SetMode(gin.ReleaseMode)
 	app := gin.Default()
-	app.LoadHTMLGlob("./view/*")
 
 	app.Any("/*proxyPath", routeProxy)
 	app.Run(addr)
