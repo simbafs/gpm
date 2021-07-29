@@ -8,6 +8,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const errPage = `<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>No Proxy Route Found</title>
+		<style>
+* {
+	font-family: Roboto, Arial, sans-serif
+}
+		</style>
+	</head>
+	<body>
+		<h1>No Proxy Route Found</h1>
+		<p>You may enter a wrong URL. Check your spell first. If it's OK, contact to the maintainer of this website.</p>
+	</body>
+</html>`
+
 type proxyRoute struct {
 	From string `toml:"from"`
 	To   string `toml:"to"`
@@ -30,14 +47,14 @@ func routeProxy(c *gin.Context) {
 	// get proxy route
 	host, ok := proxyRoutes[c.Request.Host]
 	if !ok {
-		c.HTML(http.StatusBadRequest, "400.html", nil)
+		c.Data(http.StatusBadRequest, "text/html", []byte(errPage))
 		return
 	}
 
 	// parse url
 	remote, err := url.Parse(host.To)
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "400.html", nil)
+		c.Data(http.StatusBadRequest, "text/html", []byte(errPage))
 		return
 	}
 
