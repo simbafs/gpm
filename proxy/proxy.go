@@ -16,13 +16,13 @@ type proxyRoute struct {
 //	proxyRoutes store all proxy routes
 var proxyRoutes = map[string]proxyRoute{}
 
-// AddProxy add a proxy route
-func AddProxy(from, to string) {
+// Set sets a proxy route
+func Set(from, to string) {
 	proxyRoutes[from] = proxyRoute{from, to}
 }
 
-// AddProxy add a proxy route
-func RemoveProxy(from string) {
+// Remove removes a proxy route
+func Remove(from string) {
 	delete(proxyRoutes, from)
 }
 
@@ -52,7 +52,7 @@ func routeProxy(c *gin.Context) {
 	proxy.ServeHTTP(c.Writer, c.Request)
 }
 
-// Listen start a server on addr
+// Listen starts a server on addr
 func Listen(addr string) {
 	gin.SetMode(gin.ReleaseMode)
 	app := gin.Default()
