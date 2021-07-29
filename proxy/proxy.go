@@ -1,13 +1,4 @@
-// Package gpm provide API to control reverse proxy
-// example: 
-// func main() {
-//     gpm.AddProxy("localhost:3000", "https://github.com")
-//     gpm.AddProxy("yt.localhost:3000", "https://youtube.com")
-//     gpm.AddProxy("gh.localhost:3000", "https://github.com")
-//     gpm.RemoveProxy("localhost:3000")
-//     gpm.Listen(":3000")
-// }
-package gpm
+package proxy
 
 import (
 	"net/http"
@@ -17,15 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// proxyRoute represent a proxy route
-// Example:
-// {
-//     From: "aurl.simba-fs.dev",
-//     TOo:  "http://localhost:3000",
-// }
 type proxyRoute struct {
-	From string
-	To   string
+	From string `toml:"from"`
+	To   string `toml:"to"`
 }
 
 //	proxyRoutes store all proxy routes
@@ -69,8 +54,9 @@ func routeProxy(c *gin.Context) {
 
 // Listen start a server on addr
 func Listen(addr string) {
+	gin.SetMode(gin.ReleaseMode)
 	app := gin.Default()
-	app.LoadHTMLGlob("view/*")
+	app.LoadHTMLGlob("./view/*")
 
 	app.Any("/*proxyPath", routeProxy)
 	app.Run(addr)

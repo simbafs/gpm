@@ -1,0 +1,7 @@
+[yt]
+from = "yt.localhost:3000"
+to = "https://youtube.com"
+
+[gh]
+from = "gh.localhost:3000"
+to = "https://github.com"
