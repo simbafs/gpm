@@ -1,7 +1,13 @@
-[yt]
-from = "yt.localhost:3000"
-to = "https://youtube.com"
+address = ':3000'
 
-[gh]
-from = "gh.localhost:3000"
-to = "https://github.com"
+[host.blog]
+from = 'blog.localhost:3000'
+to = 'static://blog'
+
+[host.gh]
+from = 'gh.localhost:3000'
+to = 'https://github.com'
+
+[static.blog]
+repo = 'https://github.com/simba-fs/blog'
+branch = 'master'

@@ -10,57 +10,93 @@ import (
 	"github.com/simba-fs/gpm/proxy"
 )
 
-// proxyRoute represent a proxy route
-// Example:
-// {
-//     From: "aurl.simba-fs.dev",
-//     To:  "http://localhost:3000",
-// }
-type proxyRoute struct {
+type host struct {
 	From string `toml:"from"`
 	To   string `toml:"to"`
 }
 
-type proxyRoutes []proxyRoute
+type static struct {
+	Name   string `toml:"name"`
+	Repo   string `toml:"repo"`
+	Branch string `toml:"branch"`
+}
 
-func (p *proxyRoutes) String() string {
+type config struct {
+	Address string            `toml:"address"`
+	Host    map[string]host   `toml:"host"`
+	Static  map[string]static `toml:"static"`
+}
+
+type staticSlice []static
+
+func (s *staticSlice) String() string {
 	return ""
 }
 
-func (p *proxyRoutes) Set(value string) error {
-	fromTo := strings.SplitN(value, "--", 2)
-	pr := proxyRoute{
-		From: fromTo[0],
-		To:   fromTo[1],
-	}
-	*p = append(*p, pr)
+func (s *staticSlice) Set(value string) error {
+	repoBranch := strings.SplitN(value, "^", 3)
+	*s = append(*s, static{repoBranch[0], repoBranch[1], repoBranch[2]})
+
 	return nil
 }
 
+type hostSlice []host
+
+func (p *hostSlice) String() string {
+	return ""
+}
+
+func (p *hostSlice) Set(value string) error {
+	fromTo := strings.SplitN(value, "--", 2)
+	*p = append(*p, host{fromTo[0], fromTo[1]})
+	return nil
+}
+
+func choice(choice ...string) string {
+	for _, v := range choice {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
 func main() {
-	cmdProxyConfig := proxyRoutes{}
+	// parse cmd flags
+	cmdHostConfig := hostSlice{}
+	cmdStaticConfig := staticSlice{}
 
 	configPath := flag.String("file", "gpm.toml", "path to config file")
-	flag.Var(&cmdProxyConfig, "proxy", "from->to, ex: gh.localhost:3000--https://github.com")
-	listen := flag.String("listen", "0.0.0.0:3000", "listening address")
+	flag.Var(&cmdHostConfig, "host", "from->to, ex: gh.localhost:3000--https://github.com")
+	flag.Var(&cmdStaticConfig, "static", "repo^branch^name, ex: github.com/simba-fs/gpm^main^blog")
+	address := flag.String("address", "", "listening address (default \"0.0.0.0:3000\")")
 	flag.Parse()
 
-	config := map[string]proxyRoute{}
-	configFile, _ := os.ReadFile(*configPath)
-
-	toml.Unmarshal(configFile, &config)
-
-	fmt.Printf("Load proxies from %s:\n", *configPath)
-	for _, value := range config {
-		fmt.Printf("\t%s -> %s\n", value.From, value.To)
-		proxy.Set(value.From, value.To)
-	}
-	fmt.Printf("Load proxies from cmd flags:\n")
-	for _, value := range cmdProxyConfig {
-		fmt.Printf("\t%s -> %s\n", value.From, value.To)
-		proxy.Set(value.From, value.To)
+	// read config file and parse
+	config := config{}
+	configFile, err := os.ReadFile(*configPath)
+	if err == nil {
+		fmt.Printf("Read config file %s\n", *configPath)
+		toml.Unmarshal(configFile, &config)
 	}
 
-	fmt.Printf("Server start at %s\n", *listen)
-	proxy.Listen(*listen)
+	if err != nil {
+		panic(err)
+	}
+
+	// merge config file and cmd flags
+	// cmdHostConfig
+	for _, v := range cmdHostConfig {
+		config.Host[v.From] = v
+	}
+	// cmdStaticConfig
+	for _, v := range cmdStaticConfig {
+		config.Static[v.Name] = v
+	}
+	// address
+	config.Address = choice(*address, config.Address, "0.0.0.0:3000")
+
+	fmt.Printf("config: %v\n", config)
+	fmt.Printf("Server start at %s\n", config.Address)
+	proxy.Listen(config.Address)
 }
