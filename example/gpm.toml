@@ -11,3 +11,7 @@ to = 'https://github.com'
 [static.blog]
 repo = 'https://github.com/simba-fs/blog'
 branch = 'master'
+
+[static.me]
+repo = 'https://github.com/simba-fs/simba-fs'
+branch= 'main'

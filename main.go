@@ -4,53 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/pelletier/go-toml/v2"
-	"github.com/simba-fs/gpm/proxy"
+	Host "github.com/simba-fs/gpm/host"
+	Config "github.com/simba-fs/gpm/config"
 )
-
-type host struct {
-	From string `toml:"from"`
-	To   string `toml:"to"`
-}
-
-type static struct {
-	Name   string `toml:"name"`
-	Repo   string `toml:"repo"`
-	Branch string `toml:"branch"`
-}
-
-type config struct {
-	Address string            `toml:"address"`
-	Host    map[string]host   `toml:"host"`
-	Static  map[string]static `toml:"static"`
-}
-
-type staticSlice []static
-
-func (s *staticSlice) String() string {
-	return ""
-}
-
-func (s *staticSlice) Set(value string) error {
-	repoBranch := strings.SplitN(value, "^", 3)
-	*s = append(*s, static{repoBranch[0], repoBranch[1], repoBranch[2]})
-
-	return nil
-}
-
-type hostSlice []host
-
-func (p *hostSlice) String() string {
-	return ""
-}
-
-func (p *hostSlice) Set(value string) error {
-	fromTo := strings.SplitN(value, "--", 2)
-	*p = append(*p, host{fromTo[0], fromTo[1]})
-	return nil
-}
 
 func choice(choice ...string) string {
 	for _, v := range choice {
@@ -63,9 +21,10 @@ func choice(choice ...string) string {
 
 func main() {
 	// parse cmd flags
-	cmdHostConfig := hostSlice{}
-	cmdStaticConfig := staticSlice{}
+	cmdHostConfig := Config.HostSlice{}
+	cmdStaticConfig := Config.StaticSlice{}
 
+	storagePath := flag.String("storage", "", "directory to store files such as static files (default \"./storage\")")
 	configPath := flag.String("file", "gpm.toml", "path to config file")
 	flag.Var(&cmdHostConfig, "host", "from->to, ex: gh.localhost:3000--https://github.com")
 	flag.Var(&cmdStaticConfig, "static", "repo^branch^name, ex: github.com/simba-fs/gpm^main^blog")
@@ -73,7 +32,7 @@ func main() {
 	flag.Parse()
 
 	// read config file and parse
-	config := config{}
+	config := Config.Config{}
 	configFile, err := os.ReadFile(*configPath)
 	if err == nil {
 		fmt.Printf("Read config file %s\n", *configPath)
@@ -95,8 +54,12 @@ func main() {
 	}
 	// address
 	config.Address = choice(*address, config.Address, "0.0.0.0:3000")
+	// storage
+	config.Storage = choice(*storagePath, "./storage")
 
 	fmt.Printf("config: %v\n", config)
-	fmt.Printf("Server start at %s\n", config.Address)
-	proxy.Listen(config.Address)
+
+	host := Host.Host{}
+	host.Init(&config)
+	host.Listen()
 }
