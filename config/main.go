@@ -10,9 +10,10 @@ type Host struct {
 }
 
 type Static struct {
-	Name   string `toml:"name"`
+	Name   string
 	Repo   string `toml:"repo"`
 	Branch string `toml:"branch"`
+	Path   string
 }
 
 type Config struct {
@@ -30,7 +31,7 @@ func (s *StaticSlice) String() string {
 
 func (s *StaticSlice) Set(value string) error {
 	repoBranch := strings.SplitN(value, "^", 3)
-	*s = append(*s, Static{repoBranch[0], repoBranch[1], repoBranch[2]})
+	*s = append(*s, Static{repoBranch[0], repoBranch[1], repoBranch[2], ""})
 
 	return nil
 }

@@ -27,5 +27,7 @@ func (h *Host) routeProxyStatic(c *gin.Context, host Config.Host) {
 		filesystem := os.DirFS(filePath)
 		fileserver = http.FileServer(http.FS(filesystem))
 		fileservers[hostName] = fileserver
+		fileserver.ServeHTTP(c.Writer, c.Request)
 	}
+	c.Abort()
 }

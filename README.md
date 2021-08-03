@@ -20,3 +20,6 @@ Usage of gpm:
     -storage string
         directory to store files such as static files (default "./storage")
 ```
+
+# TODO 
+- [ ] Check if the file exists when setting up a static host

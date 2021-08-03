@@ -4,10 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/pelletier/go-toml/v2"
-	Host "github.com/simba-fs/gpm/host"
 	Config "github.com/simba-fs/gpm/config"
+	Host "github.com/simba-fs/gpm/host"
 )
 
 func choice(choice ...string) string {
@@ -44,6 +45,14 @@ func main() {
 	}
 
 	// merge config file and cmd flags
+	// address
+	config.Address = choice(*address, config.Address, "0.0.0.0:3000")
+	// storage
+	cwd, _ := os.Getwd()
+	config.Storage = choice(*storagePath, "./storage")
+	if !path.IsAbs(config.Storage) {
+		config.Storage = path.Join(cwd, config.Storage)
+	}
 	// cmdHostConfig
 	for _, v := range cmdHostConfig {
 		config.Host[v.From] = v
@@ -52,10 +61,14 @@ func main() {
 	for _, v := range cmdStaticConfig {
 		config.Static[v.Name] = v
 	}
-	// address
-	config.Address = choice(*address, config.Address, "0.0.0.0:3000")
-	// storage
-	config.Storage = choice(*storagePath, "./storage")
+	for k, v := range config.Static {
+		config.Static[k] = Config.Static{
+			Name: k,
+			Repo: v.Repo,
+			Branch: v.Branch,
+			Path: path.Join(config.Storage, k),
+		}
+	}
 
 	fmt.Printf("config: %v\n", config)
 

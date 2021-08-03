@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
+	"path"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -34,6 +35,15 @@ func (h *Host) Init(c *Config.Config) {
 	</body>
 </html>`
 	h.Config = c
+
+	fmt.Printf("Loaded proxy routes:\n")
+	for _, v := range c.Host {
+		fmt.Printf("    %s -> %s\n", v.From, v.To)
+	}
+	fmt.Printf("Loaded static paths:\n")
+	for _, v := range c.Static {
+		fmt.Printf("    %s^%s -> %s\n", v.Repo, v.Branch, path.Join(c.Storage, v.Name))
+	}
 }
 
 // Set sets a proxy route

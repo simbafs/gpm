@@ -1,4 +1,5 @@
 address = ':3000'
+storage = './storage'
 
 [host.blog]
 from = 'blog.localhost:3000'
@@ -11,7 +12,3 @@ to = 'https://github.com'
 [static.blog]
 repo = 'https://github.com/simba-fs/blog'
 branch = 'master'
-
-[static.me]
-repo = 'https://github.com/simba-fs/simba-fs'
-branch= 'main'
