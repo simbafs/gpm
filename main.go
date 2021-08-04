@@ -9,6 +9,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 	Config "github.com/simba-fs/gpm/config"
 	Host "github.com/simba-fs/gpm/host"
+	Git "github.com/simba-fs/gpm/git"
 )
 
 func choice(choice ...string) string {
@@ -71,6 +72,9 @@ func main() {
 	}
 
 	fmt.Printf("config: %v\n", config)
+
+	git := Git.Git{}
+	git.Init(&config)
 
 	host := Host.Host{}
 	host.Init(&config)
