@@ -5,12 +5,15 @@ import (
 	"os"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/op/go-logging"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/robfig/cron/v3"
 	Config "github.com/simba-fs/gpm/config"
 )
 
+var log = logging.MustGetLogger("git/main")
 var c *cron.Cron
+var repos = map[string](*git.Repository){}
 
 func init() {
 	c = cron.New()
@@ -24,9 +27,10 @@ func updateRepo(static Config.Static) error {
 	s, err := os.Stat(static.Path)
 	if os.IsNotExist(err) || !s.IsDir() {
 		r, err := git.PlainClone(static.Path, false, &git.CloneOptions{
-			URL: static.Repo,
+			URL:               static.Repo,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
+		repos[static.Name] = r
 		if err != nil {
 			return err
 		}
@@ -38,9 +42,12 @@ func updateRepo(static Config.Static) error {
 			Branch: plumbing.ReferenceName(static.Branch),
 		})
 	} else {
-		r, err := git.PlainOpen(static.Path)
-		if err != nil {
-			return err
+		r, ok := repos[static.Name]
+		if !ok {
+			r, err = git.PlainOpen(static.Path)
+			if err != nil {
+				return err
+			}
 		}
 		w, err := r.Worktree()
 		if err != nil {
@@ -68,7 +75,6 @@ func (g *Git) Set(static Config.Static) {
 		panic(err)
 	}
 	eid, err := c.AddFunc(cronExpression(g.Config.Interval), func() {
-		// fmt.Printf("static: %#v\n", static)
 		if err := updateRepo(static); err != nil {
 			panic(err)
 		}

@@ -23,3 +23,4 @@ Usage of gpm:
 
 # TODO 
 - [ ] Check if the file exists when setting up a static host
+- [ ] support ssh access to a private reoo

@@ -1,6 +1,7 @@
 address = ':3000'
 storage = './storage'
 interval = 1
+logLevel = 'debug'
 
 [host.blog]
 from = 'blog.localhost:3000'

@@ -1,16 +1,18 @@
 package host
 
 import (
-	"fmt"
 	"io/fs"
 	"net/http"
 	"net/url"
-	"path"
 	"os"
+	"path"
 
 	"github.com/gin-gonic/gin"
+	"github.com/op/go-logging"
 	Config "github.com/simba-fs/gpm/config"
 )
+
+var log = logging.MustGetLogger("host/main")
 
 type Host struct {
 	ErrPage string
@@ -36,13 +38,13 @@ func (h *Host) Init(c *Config.Config) {
 </html>`
 	h.Config = c
 
-	fmt.Printf("Loaded proxy routes:\n")
+	log.Noticef("Loaded proxy routes:\n")
 	for _, v := range c.Host {
-		fmt.Printf("    %s -> %s\n", v.From, v.To)
+		log.Noticef("    %s -> %s\n", v.From, v.To)
 	}
-	fmt.Printf("Loaded static paths:\n")
+	log.Noticef("Loaded static paths:\n")
 	for _, v := range c.Static {
-		fmt.Printf("    %s^%s -> %s\n", v.Repo, v.Branch, path.Join(c.Storage, v.Name))
+		log.Noticef("    %s^%s -> %s\n", v.Repo, v.Branch, path.Join(c.Storage, v.Name))
 	}
 }
 
@@ -94,7 +96,7 @@ func (h *Host) Listen() {
 	app := gin.Default()
 
 	app.Any("/*proxyPath", h.routeProxy)
-	fmt.Printf("Server start at %s\n", h.Config.Address)
+	log.Warningf("Server start at %s\n", h.Config.Address)
 	app.Run(h.Config.Address)
 }
 
