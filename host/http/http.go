@@ -1,4 +1,4 @@
-package host
+package http
 
 import (
 	"net/http"
@@ -9,11 +9,19 @@ import (
 	Config "github.com/simba-fs/gpm/config"
 )
 
-func (h *Host) routeProxyHttp(c *gin.Context, host Config.Host) {
+func Route(c *gin.Context) {
+	h, ok := c.Get("host")
+	if !ok {
+		return
+	}
+	host := h.(*Config.Host)
+
+	ErrPage, _ := c.Get("ErrPage")
+
 	// parse url
 	remote, err := url.Parse(host.To)
 	if err != nil {
-		c.Data(http.StatusBadRequest, "text/html", []byte(h.ErrPage))
+		c.Data(http.StatusBadRequest, "text/html", ErrPage.([]byte))
 		return
 	}
 

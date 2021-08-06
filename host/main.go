@@ -11,10 +11,19 @@ import (
 	"github.com/gin-gonic/gin"
 	Config "github.com/simba-fs/gpm/config"
 	Log "github.com/simba-fs/gpm/log"
+	Http "github.com/simba-fs/gpm/host/http"
+	Static "github.com/simba-fs/gpm/host/static"
 )
 
 var log = Log.NewLog("host/main")
 var logWriter = map[string]io.Writer{}
+var middleWare = map[string]gin.HandlerFunc{}
+
+func init(){
+	middleWare["http"] = Http.Route
+	middleWare["https"] = Http.Route
+	middleWare["static"] = Static.Route
+}
 
 type Host struct {
 	ErrPage string
@@ -84,11 +93,14 @@ func (h *Host) routeProxy(c *gin.Context) {
 		return
 	}
 
-	switch remote.Scheme {
-	case "http", "https":
-		h.routeProxyHttp(c, host)
-	case "static":
-		h.routeProxyStatic(c, host)
+	c.Set("config", h.Config)
+	c.Set("host", &host)
+	c.Set("ErrPage", h.ErrPage)
+
+	handleFunc, ok := middleWare[remote.Scheme]
+	log.Debug(handleFunc, ok)
+	if ok {
+		handleFunc(c)
 	}
 }
 
