@@ -8,11 +8,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 	Config "github.com/simba-fs/gpm/config"
+	// Log "github.com/simba-fs/gpm/log"
 )
 
 var fileservers = map[string]http.Handler{}
+// var log = Log.NewLog("host/static")
 
 func (h *Host) routeProxyStatic(c *gin.Context, host Config.Host) {
+	// block access to .git
+	url, ok := strings.Split(c.Request.URL.Path, "/"), true
+	for _, v := range url {
+		if v == ".git" {
+			ok = false
+		}
+	}
+	if !ok {
+		c.Redirect(http.StatusFound, "/")
+	}
+
 	hostName := strings.SplitN(host.To, "://", 2)[1]
 
 	filePath := path.Join(h.Config.Storage, hostName)

@@ -13,5 +13,5 @@ from = 'gh.localhost:3000'
 to = 'https://github.com'
 
 [static.blog]
-repo = '~/blog/.deploy_git'
+repo = 'https://github.com/simba-fs/simba-fs'
 branch = 'master'

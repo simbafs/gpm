@@ -29,7 +29,10 @@ func updateRepo(static Config.Static) error {
 		r, err := git.PlainClone(static.Path, false, &git.CloneOptions{
 			URL:               static.Repo,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+			Depth: 1,
+			Progress: os.Stdout,
 		})
+		log.Noticef("Cloned %s\n", static.Name)
 		repos[static.Name] = r
 		if err != nil {
 			return err
