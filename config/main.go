@@ -21,6 +21,7 @@ type Static struct {
 type Config struct {
 	Address  string            `toml:"address"`
 	Storage  string            `toml:"storage"`
+	Log      string            `toml:"log"`
 	Interval int               `toml:"interval"`
 	LogLevel string            `toml:"logLevel"`
 	Host     map[string]Host   `toml:"host"`

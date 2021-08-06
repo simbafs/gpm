@@ -1,6 +1,7 @@
 package host
 
 import (
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -8,11 +9,12 @@ import (
 	"path"
 
 	"github.com/gin-gonic/gin"
-	"github.com/op/go-logging"
 	Config "github.com/simba-fs/gpm/config"
+	Log "github.com/simba-fs/gpm/log"
 )
 
-var log = logging.MustGetLogger("host/main")
+var log = Log.NewLog("host/main")
+var logWriter = map[string]io.Writer{}
 
 type Host struct {
 	ErrPage string
@@ -21,21 +23,21 @@ type Host struct {
 
 func (h *Host) Init(c *Config.Config) {
 	h.ErrPage = `<!DOCTYPE html>
-<html lang="en">
+	<html lang="en">
 	<head>
-		<meta charset="UTF-8">
-		<title>Page Not Found</title>
-		<style>
-* {
-	font-family: Roboto, Arial, sans-serif
-}
-		</style>
+	<meta charset="UTF-8">
+	<title>Page Not Found</title>
+	<style>
+	* {
+		font-family: Roboto, Arial, sans-serif
+	}
+	</style>
 	</head>
 	<body>
-		<h1>Page Not Found</h1>
-		<p>You may enter a wrong URL. Check your spell first. If it's OK, contact to the maintainer of this website.</p>
+	<h1>Page Not Found</h1>
+	<p>You may enter a wrong URL. Check your spell first. If it's OK, contact to the maintainer of this website.</p>
 	</body>
-</html>`
+	</html>`
 	h.Config = c
 
 	log.Noticef("Loaded proxy routes:\n")
@@ -49,7 +51,7 @@ func (h *Host) Init(c *Config.Config) {
 }
 
 // Set sets a proxy route
-func (h *Host) Set(from, to string) {
+func (h *Host) Set(name, from, to string) {
 	h.Config.Host[from] = Config.Host{
 		From: from,
 		To:   to,
@@ -93,7 +95,8 @@ func (h *Host) routeProxy(c *gin.Context) {
 // Listen starts a server on addr
 func (h *Host) Listen() {
 	gin.SetMode(gin.ReleaseMode)
-	app := gin.Default()
+	app := gin.New()
+	app.Use(gin.Recovery(), Log.NewLogMiddleware(h.Config))
 
 	app.Any("/*proxyPath", h.routeProxy)
 	log.Warningf("Server start at %s\n", h.Config.Address)
@@ -107,7 +110,7 @@ func (h *Host) SetConfig() {
 	}
 
 	// set hosts
-	for _, v := range h.Config.Host {
-		h.Set(v.From, v.To)
+	for k, v := range h.Config.Host {
+		h.Set(k, v.From, v.To)
 	}
 }

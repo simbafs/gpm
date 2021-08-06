@@ -5,13 +5,13 @@ import (
 	"os"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/op/go-logging"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/robfig/cron/v3"
 	Config "github.com/simba-fs/gpm/config"
+	Log "github.com/simba-fs/gpm/log"
 )
 
-var log = logging.MustGetLogger("git/main")
+var log = Log.NewLog("git/main")
 var c *cron.Cron
 var repos = map[string](*git.Repository){}
 

@@ -2,36 +2,17 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"path"
 
-	"github.com/op/go-logging"
 	"github.com/pelletier/go-toml/v2"
 	Config "github.com/simba-fs/gpm/config"
 	Git "github.com/simba-fs/gpm/git"
 	Host "github.com/simba-fs/gpm/host"
+	Log "github.com/simba-fs/gpm/log"
 )
 
-var formatter = logging.MustStringFormatter(
-	`%{color}%{module} %{longfunc} ▶ %{level:.4s} %{color:reset} %{message}`,
-)
-
-var level = map[string]logging.Level{
-	"critical": logging.CRITICAL,
-	"error": logging.ERROR,
-	"warning": logging.WARNING,
-	"notice": logging.NOTICE,
-	"info": logging.INFO,
-	"debug": logging.DEBUG,
-	"0": logging.CRITICAL,
-	"1": logging.ERROR,
-	"2": logging.WARNING,
-	"3": logging.NOTICE,
-	"4": logging.INFO,
-	"5": logging.DEBUG,
-
-}
+var config = Config.Config{}
 
 func choice(choice ...string) string {
 	for _, v := range choice {
@@ -42,10 +23,8 @@ func choice(choice ...string) string {
 	return ""
 }
 
-func main() {
-	fmt.Println("test")
-	logging.SetFormatter(formatter)
-	log := logging.MustGetLogger("main")
+func init() {
+	log := Log.NewLog("main")
 	// log.Debugf("debug %s", "test")
 	// log.Info("info")
 	// log.Notice("notice")
@@ -58,6 +37,7 @@ func main() {
 	cmdStaticConfig := Config.StaticSlice{}
 
 	storagePath := flag.String("storage", "", "directory to store files such as static files (default \"./storage\")")
+	logPath := flag.String("log", "", "directory to store log files (default \"./log\")")
 	configPath := flag.String("file", "gpm.toml", "path to config file")
 	flag.Var(&cmdHostConfig, "host", "from->to, ex: gh.localhost:3000--https://github.com")
 	flag.Var(&cmdStaticConfig, "static", "repo^branch^name, ex: github.com/simba-fs/gpm^main^blog")
@@ -65,13 +45,9 @@ func main() {
 	logLevel := flag.String("logLevel", "info", "set log level.\nAvailable value: critical, error, warning, notice, info, debug, 0, 1, 2, 3, 4, 5")
 	flag.Parse()
 
-	logging.SetLevel(level[*logLevel], "")
-
 	// read config file and parse
-	config := Config.Config{}
 	configFile, err := os.ReadFile(*configPath)
 	if err == nil {
-		log.Noticef("Read config file %s\n", *configPath)
 		toml.Unmarshal(configFile, &config)
 	}
 
@@ -84,12 +60,16 @@ func main() {
 	config.Address = choice(*address, config.Address, "0.0.0.0:3000")
 	// storage
 	cwd, _ := os.Getwd()
-	config.Storage = choice(*storagePath, "./storage")
+	config.Storage = choice(*storagePath, config.Storage, "./storage")
 	if !path.IsAbs(config.Storage) {
 		config.Storage = path.Join(cwd, config.Storage)
 	}
 	config.LogLevel = choice(*logLevel, config.LogLevel)
-	logging.SetLevel(level[config.LogLevel], "")
+	// log file
+	config.Log = choice(*logPath, config.Log)
+	if config.Log != "" && !path.IsAbs(config.Log) {
+		config.Log = path.Join(cwd, config.Log)
+	}
 	// cmdHostConfig
 	for _, v := range cmdHostConfig {
 		config.Host[v.From] = v
@@ -107,8 +87,12 @@ func main() {
 		}
 	}
 
-	log.Debugf("config: %v\n", config)
+	Log.Init(&config)
 
+	log.Debugf("config: %v\n", config)
+}
+
+func main() {
 	git := Git.Git{}
 	go git.Init(&config)
 
